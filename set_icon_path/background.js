@@ -67,15 +67,22 @@ var action;
 var country;
 var grade;
 
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+function sleepFor(sleepDuration){
+    var now = new Date().getTime();
+    while(new Date().getTime() < now + sleepDuration){
+        /* Do nothing */
+    }
+}
+
+
+chrome.tabs.onActivated.addListener(function(tabId, changeInfo, tab) {
+    sleepFor(300);
     chrome.tabs.getSelected(null, function(tab) {
       myURL = tab.url;
 
       companyName = getCompanyName(myURL)
-      // alert(data)
 
       if (companyName === null) {
-        // alert("not found")
         return null;
       }
 
