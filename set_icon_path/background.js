@@ -12,52 +12,87 @@ chrome.runtime.onInstalled.addListener(function() {
   });
 });
 
+function numberToGrade(number) {
+  return "abcdf"[number-1];
+}
+
+function gradeToNumber(grade) {
+  return "abcdf".indexOf(grade) + 1;
+}
+
+
 function updateIcon() {
   chrome.storage.sync.get('number', function(data) {
     var current = data.number;
 
-    // alert(current);
-    // alert(typeof current)
-
-    let grade;
-    switch (current) {
-      case 1:
-        grade = "a";
-        // alert(current);
-        // alert(typeof current);
-        break;
-      case 2:
-        grade = "b";
-        break;
-      case 3:
-        grade = "c";
-        break;
-      case 4:
-        grade = "d";
-        break;
-      case 5:
-        grade = "f";
-        break;
-    }
+    let grade = numberToGrade(current);
 
     chrome.browserAction.setIcon({path: 'letter' + "_" + grade + '.png'});
-    current++;
-    if (current > 5)
-      current = 1;
     chrome.storage.sync.set({number: current}, function() {
       console.log('The number is set to ' + current);
     });
   });
 };
 
-chrome.browserAction.onClicked.addListener(updateIcon);
+function displayCompanyInformation() {
+  let information = "";
+  information += "Company name: " + companyName + "\n";
+  information += "Status: " + action + "\n";
+  information += "Origin country: " + country;
+
+  alert(information);
+}
+
+chrome.browserAction.onClicked.addListener(displayCompanyInformation);
 updateIcon();
 
-var myURL = "about:blank"; // A default url just in case below code doesn't work
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) { // onUpdated should fire when the selected tab is changed or a link is clicked
+function getCompanyName(url) {
+  for (let companyName in DATABASE) {
+    if (url.includes(companyName)) {
+        return companyName;
+    }
+  }
+  return null;
+}
+
+function changeIcon(grade) {
+  chrome.storage.sync.set({number: grade});
+  updateIcon();
+}
+
+var myURL = "about:blank";
+
+var companyName;
+var action;
+var country;
+var grade;
+
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     chrome.tabs.getSelected(null, function(tab) {
-        myURL = tab.url;
-        alert(myURL);
+      myURL = tab.url;
+
+      companyName = getCompanyName(myURL)
+      // alert(data)
+
+      if (companyName === null) {
+        // alert("not found")
+        return null;
+      }
+
+      let companyInformation = DATABASE[companyName];
+
+      action = companyInformation["action"]
+      country = companyInformation["country"]
+      grade = companyInformation["grade"]
+
+      // alert(companyName);
+
+      let gradeNumber = gradeToNumber(grade)
+      chrome.storage.sync.set({number: gradeNumber}, function() {
+        updateIcon();
+        console.log('The number is set to ' + gradeNumber);
+      });
+
     });
 });
 
